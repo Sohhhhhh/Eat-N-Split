@@ -1,7 +1,7 @@
-import { ReactNode } from 'react';
+import { MouseEventHandler, ReactNode, useState, SubmitEvent } from 'react';
 
 type friendType = {
-  id: number;
+  id: string;
   name: string;
   image: string;
   balance: number;
@@ -9,19 +9,19 @@ type friendType = {
 
 const initialFriends: friendType[] = [
   {
-    id: 118836,
+    id: '118836',
     name: 'Clark',
     image: 'https://i.pravatar.cc/48?u=118836',
     balance: -7,
   },
   {
-    id: 933372,
+    id: '933372',
     name: 'Sarah',
     image: 'https://i.pravatar.cc/48?u=933372',
     balance: 20,
   },
   {
-    id: 499476,
+    id: '499476',
     name: 'Anthony',
     image: 'https://i.pravatar.cc/48?u=499476',
     balance: 0,
@@ -29,20 +29,47 @@ const initialFriends: friendType[] = [
 ];
 
 export default function App() {
+  const [friends, setFriends] = useState(initialFriends);
+  const [showAddFriend, setShowAddFriend] = useState(false);
+
+  function handleShowAddFriend() {
+    setShowAddFriend((show) => !show);
+  }
+
+  function handleAddFriend(friend: friendType) {
+    setFriends((friends) => [...friends, friend]);
+    setShowAddFriend(false);
+  }
+
   return (
     <div className="app">
       <div className="sidebar">
-        <FriendsList />
-        <FormAddFriend />
-        <Button>Add Friend</Button>
+        <FriendsList friends={friends} />
+        {showAddFriend && <FormAddFriend onAddFriend={handleAddFriend} />}
+        <Button onClick={handleShowAddFriend}>
+          {showAddFriend ? 'Close' : 'Add Friend'}
+        </Button>
       </div>
       <FormSplitBill />
     </div>
   );
 }
 
-function FriendsList() {
-  const friends = initialFriends;
+function Button({
+  children,
+  onClick,
+}: {
+  children: ReactNode;
+  onClick: MouseEventHandler<HTMLButtonElement>;
+}) {
+  return (
+    <button className="button" onClick={onClick}>
+      {children}
+    </button>
+  );
+}
+
+function FriendsList({ friends }: { friends: friendType[] }) {
   return (
     <ul>
       {friends.map((friend) => (
@@ -50,10 +77,6 @@ function FriendsList() {
       ))}
     </ul>
   );
-}
-
-function Button({ children }: { children: ReactNode }) {
-  return <button className="button">{children}</button>;
 }
 
 function Friend({ friend }: { friend: friendType }) {
@@ -78,14 +101,42 @@ function Friend({ friend }: { friend: friendType }) {
   );
 }
 
-function FormAddFriend() {
+function FormAddFriend({ onAddFriend }: { onAddFriend: Function }) {
+  const [name, setName] = useState('');
+  const [image, setImage] = useState('https://i.pravatar.cc/48');
+
+  function handleSubmit(e: SubmitEvent) {
+    e.preventDefault();
+    if (!name || !image) return;
+
+    const id = crypto.randomUUID();
+    const newFriend: friendType = {
+      name,
+      image: `${image}?=${id}`,
+      balance: 0,
+      id,
+    };
+    onAddFriend(newFriend);
+
+    setName('');
+    setImage('https://i.pravatar.cc/48');
+  }
+
   return (
-    <form className="form-add-friend">
+    <form className="form-add-friend" onSubmit={handleSubmit}>
       <label>👭🏻Friend name</label>
-      <input type="text" />
+      <input
+        type="text"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+      />
 
       <label>🌄Image URL</label>
-      <input type="text" />
+      <input
+        type="text"
+        value={image}
+        onChange={(e) => setImage(e.target.value)}
+      />
 
       <Button>Add</Button>
     </form>
